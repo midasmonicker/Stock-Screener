@@ -1,0 +1,21 @@
+{
+  "name": "market-data-service",
+  "version": "1.0.0",
+  "description": "Multi-tier stock market data service integrating Alpaca, Finnhub, FMP, EODHD, Finviz, and Polygon",
+  "main": "dataService.js",
+  "scripts": {
+    "test": "node test/dataService.test.js",
+    "start": "node -e \"const { fetchMarketData } = require('./dataService'); fetchMarketData(['AAPL', 'MSFT']).then(console.log);\""
+  },
+  "keywords": [
+    "stock-market",
+    "market-data",
+    "alpaca",
+    "finnhub",
+    "finviz",
+    "polygon",
+    "fmp"
+  ],
+  "author": "",
+  "license": "MIT"
+}
