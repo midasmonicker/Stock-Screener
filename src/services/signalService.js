@@ -1,5 +1,5 @@
 // src/services/signalService.js
-const { fetchMarketData } = require('../dataService');
+const { fetchMarketData } = require('./dataService');
 
 async function getSignals(tickers) {
   const data = await fetchMarketData(tickers);
