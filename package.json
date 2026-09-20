@@ -5,7 +5,7 @@
   "main": "dataService.js",
   "scripts": {
     "test": "node test/dataService.test.js",
-    "start": "node -e \"const { fetchMarketData } = require('./dataService'); fetchMarketData(['AAPL', 'MSFT']).then(console.log);\""
+    "start": "node src/server.js"
   },
   "keywords": [
     "stock-market",
