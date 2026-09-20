@@ -19,3 +19,8 @@ app.get('/api/signals', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+app.get('/', (req, res) => {
+  res.send('Market Data Service is running 🚀');
+});
+
