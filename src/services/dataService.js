@@ -270,6 +270,16 @@ function detectSingleSignal(stock) {
     };
   }
 
+    if (stock.history && Array.isArray(stock.history)) {
+    const closes = stock.history.map(h => h.close);
+    const rsi = RSI.calculate({ values: closes, period: 14 }).pop();
+    if (rsi < 30) signal = 'Oversold (Bullish)';
+    else if (rsi > 70) signal = 'Overbought (Bearish)';
+  }
+
+  return { ticker, price, change_pct: rawChangePct, rel_vol: rawRelVol, signal };
+}
+
   const ticker = stock.ticker || '';
   const price = stock.price !== null && stock.price !== undefined ? parseNumber(stock.price) : null;
   const prevClose = stock.prevClose !== null && stock.prevClose !== undefined ? parseNumber(stock.prevClose) : null;
