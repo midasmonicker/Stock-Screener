@@ -433,9 +433,6 @@ module.exports.detectSignal = detectSignal;
 module.exports.loadScreenedSignals = loadScreenedSignals;
 module.exports.mergeScreenedSignals = loadScreenedSignals;
 
-const path = require('node:path');
-const fs = require('node:fs');
-
 function resolveFinvizFile() {
   // Prefer persistent disk path if available (Render)
   const diskPath = '/data/finviz_signals.json';
