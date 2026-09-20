@@ -259,59 +259,47 @@ async function fetchMarketData(tickers, options = {}) {
 /**
  * Helper to compute signal metrics for a single stock object.
  */
+const { RSI } = require('technicalindicators');
+
 function detectSingleSignal(stock) {
   if (!stock || typeof stock !== 'object') {
-    return {
-      ticker: '',
-      price: null,
-      change_pct: null,
-      rel_vol: null,
-      signal: null
-    };
+    return { ticker: '', price: null, change_pct: null, rel_vol: null, signal: null };
   }
-
-    if (stock.history && Array.isArray(stock.history)) {
-    const closes = stock.history.map(h => h.close);
-    const rsi = RSI.calculate({ values: closes, period: 14 }).pop();
-    if (rsi < 30) signal = 'Oversold (Bullish)';
-    else if (rsi > 70) signal = 'Overbought (Bearish)';
-  }
-
-  return { ticker, price, change_pct: rawChangePct, rel_vol: rawRelVol, signal };
-}
 
   const ticker = stock.ticker || '';
-  const price = stock.price !== null && stock.price !== undefined ? parseNumber(stock.price) : null;
-  const prevClose = stock.prevClose !== null && stock.prevClose !== undefined ? parseNumber(stock.prevClose) : null;
-  const volume = stock.volume !== null && stock.volume !== undefined ? parseNumber(stock.volume) : null;
-  const avgVolume = stock.avgVolume !== null && stock.avgVolume !== undefined ? parseNumber(stock.avgVolume) : null;
+  const price = stock.price != null ? parseNumber(stock.price) : null;
+  const prevClose = stock.prevClose != null ? parseNumber(stock.prevClose) : null;
+  const volume = stock.volume != null ? parseNumber(stock.volume) : null;
+  const avgVolume = stock.avgVolume != null ? parseNumber(stock.avgVolume) : null;
 
-  // % Change = (price - prevClose) / prevClose * 100
+  // % Change
   let rawChangePct = null;
   if (price !== null && prevClose !== null && prevClose > 0) {
     rawChangePct = ((price - prevClose) / prevClose) * 100;
   }
 
-  // Relative Volume = currentVolume / avgVolume
+  // Relative Volume
   let rawRelVol = null;
   if (volume !== null && avgVolume !== null && avgVolume > 0) {
     rawRelVol = volume / avgVolume;
   }
 
-  // Signal rules:
-  // - relVol >= 2.0 and %Change >= 3.0 -> "High Buying Interest"
-  // - relVol >= 2.0 -> "Unusual Volume"
-  // - %Change >= 3.0 -> "Price Momentum"
+  // Signal rules
   let signal = null;
-  const hasRelVol = rawRelVol !== null;
-  const hasChangePct = rawChangePct !== null;
-
-  if (hasRelVol && hasChangePct && rawRelVol >= 2.0 && rawChangePct >= 3.0) {
+  if (rawRelVol !== null && rawChangePct !== null && rawRelVol >= 2.0 && rawChangePct >= 3.0) {
     signal = 'High Buying Interest';
-  } else if (hasRelVol && rawRelVol >= 2.0) {
+  } else if (rawRelVol !== null && rawRelVol >= 2.0) {
     signal = 'Unusual Volume';
-  } else if (hasChangePct && rawChangePct >= 3.0) {
+  } else if (rawChangePct !== null && rawChangePct >= 3.0) {
     signal = 'Price Momentum';
+  }
+
+  // RSI enrichment
+  if (stock.history && Array.isArray(stock.history)) {
+    const closes = stock.history.map(h => h.close);
+    const rsi = RSI.calculate({ values: closes, period: 14 }).pop();
+    if (rsi < 30) signal = 'Oversold (Bullish)';
+    else if (rsi > 70) signal = 'Overbought (Bearish)';
   }
 
   return {
@@ -346,13 +334,14 @@ function detectSignal(stock) {
 async function loadScreenedSignals(jsonPathOrData = 'finviz_signals.json', options = {}) {
   let screenedList = [];
 
-  if (Array.isArray(jsonPathOrData)) {
-    screenedList = jsonPathOrData;
-  } else if (typeof jsonPathOrData === 'string') {
-    let filePath = path.isAbsolute(jsonPathOrData)
+  // Resolve file path if a string was passed
+  let filePath = resolveFinvizFile();
+  if (typeof jsonPathOrData === 'string') {
+    filePath = path.isAbsolute(jsonPathOrData)
       ? jsonPathOrData
       : path.resolve(process.cwd(), jsonPathOrData);
 
+    // Fallback to alternate file if not found
     if (!fs.existsSync(filePath) && (jsonPathOrData === 'finviz_signals.json' || jsonPathOrData === 'screened_stocks.json')) {
       const altFile = jsonPathOrData === 'finviz_signals.json' ? 'screened_stocks.json' : 'finviz_signals.json';
       const altPath = path.resolve(process.cwd(), altFile);
@@ -362,11 +351,14 @@ async function loadScreenedSignals(jsonPathOrData = 'finviz_signals.json', optio
     }
 
     if (!fs.existsSync(filePath)) {
-      throw new Error(`Screened stocks JSON file not found at: ${filePath}`);
+      console.warn(`[dataService] Screened stocks JSON file not found at: ${filePath}`);
+      return [];
     }
 
     const content = fs.readFileSync(filePath, 'utf8');
     screenedList = JSON.parse(content);
+  } else if (Array.isArray(jsonPathOrData)) {
+    screenedList = jsonPathOrData;
   } else if (jsonPathOrData && typeof jsonPathOrData === 'object') {
     screenedList = [jsonPathOrData];
   }
@@ -375,7 +367,7 @@ async function loadScreenedSignals(jsonPathOrData = 'finviz_signals.json', optio
     return [];
   }
 
-  // If live refresh is requested, fetch latest market quotes
+  // Optionally refresh with live quotes
   let freshQuotesMap = {};
   if (options.refreshMarketData) {
     const tickers = screenedList.map(s => s.ticker).filter(Boolean);
@@ -389,7 +381,7 @@ async function loadScreenedSignals(jsonPathOrData = 'finviz_signals.json', optio
     const ticker = screened.ticker ? screened.ticker.toUpperCase() : '';
     const fresh = freshQuotesMap[ticker] || {};
 
-    // Use fresh market data if available, otherwise use screener data
+    // Merge screener data with fresh quotes
     const mergedStock = {
       ticker,
       price: fresh.price ?? screened.price ?? null,
@@ -440,4 +432,30 @@ module.exports.default = fetchMarketData;
 module.exports.detectSignal = detectSignal;
 module.exports.loadScreenedSignals = loadScreenedSignals;
 module.exports.mergeScreenedSignals = loadScreenedSignals;
+
+const path = require('node:path');
+const fs = require('node:fs');
+
+function resolveFinvizFile() {
+  // Prefer persistent disk path if available (Render)
+  const diskPath = '/data/finviz_signals.json';
+  if (fs.existsSync(diskPath)) {
+    return diskPath;
+  }
+
+  // Fall back to repo root (local dev or GitHub Actions commit)
+  const repoPath = path.resolve(process.cwd(), 'finviz_signals.json');
+  if (fs.existsSync(repoPath)) {
+    return repoPath;
+  }
+
+  // Final fallback: screened_stocks.json if present
+  const altPath = path.resolve(process.cwd(), 'screened_stocks.json');
+  if (fs.existsSync(altPath)) {
+    return altPath;
+  }
+
+  // If nothing found, return null
+  return null;
+}
 
