@@ -1,0 +1,33 @@
+name: Refresh Finviz Signals
+
+on:
+  schedule:
+    - cron: "0 6 * * *"   # every day at 6 AM UTC
+  workflow_dispatch:       # allow manual runs
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: pip install finvizfinance
+
+      - name: Generate finviz_signals.json
+        run: python generate_finviz_signals.py
+
+      - name: Commit and push updated JSON
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add finviz_signals.json
+          git commit -m "Auto-update finviz_signals.json"
+          git push
