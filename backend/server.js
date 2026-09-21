@@ -7,7 +7,7 @@ const PORT = 3001;
 
 // Restrict CORS to your frontend domain
 app.use(cors({
-  origin: "https://your-app.vercel.app"   // replace with your actual frontend URL
+  origin: "https://stock-screener-sepia.vercel.app/"
 }));
 
 app.get("/stocks", (req, res) => {
