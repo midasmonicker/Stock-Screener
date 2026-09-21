@@ -3,7 +3,7 @@ const WebSocket = require("ws");
 const cors = require("cors");
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // Restrict CORS to your frontend domain
 app.use(cors({
