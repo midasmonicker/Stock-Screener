@@ -1,25 +1,11 @@
 {
-  "name": "market-data-service",
+  "name": "stock-screener",
   "version": "1.0.0",
-  "description": "Multi-tier stock market data service integrating Alpaca, Finnhub, FMP, EODHD, Finviz, and Polygon",
-  "main": "dataService.js",
   "scripts": {
-    "test": "node test/dataService.test.js",
-    "start": "node src/server.js"
+    "start": "concurrently \"npm run dev --prefix frontend\" \"npm start --prefix backend\""
   },
-  "keywords": [
-    "stock-market",
-    "market-data",
-    "alpaca",
-    "finnhub",
-    "finviz",
-    "polygon",
-    "fmp"
-  ],
-  "author": "",
-  "license": "MIT",
-  "dependencies": {
-    "express": "^5.2.1",
-    "technicalindicators": "^3.1.0"
+  "devDependencies": {
+    "concurrently": "^10.0.5"
   }
 }
+
