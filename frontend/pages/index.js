@@ -113,7 +113,23 @@ export default function Home() {
         </div>
       ) : (
         <table style={{ borderCollapse: "collapse", minWidth: "1000px" }}>
-          {/* ... table rendering code ... */}
+          <thead>
+            <tr>
+              <th style={{ border: "1px solid #ccc", padding: "8px" }}>Ticker</th>
+              <th style={{ border: "1px solid #ccc", padding: "8px" }}>Price</th>
+              <th style={{ border: "1px solid #ccc", padding: "8px" }}>Change %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {stocks.slice(0, visibleCount).map((s) => (
+              <tr key={s.ticker}>
+                <td style={{ border: "1px solid #ccc", padding: "8px" }}>{s.ticker}</td>
+                <td style={{ border: "1px solid #ccc", padding: "8px" }}>${s.price}</td>
+                <td style={{ border: "1px solid #ccc", padding: "8px" }}>{s.changePercent}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
         </table>
       )}
     </div>
