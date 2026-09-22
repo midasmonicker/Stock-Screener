@@ -130,7 +130,6 @@ export default function Home() {
             ))}
           </tbody>
         </table>
-        </table>
       )}
     </div>
   );
