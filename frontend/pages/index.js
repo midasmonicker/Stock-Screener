@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import SearchBar from "../components/SearchBar";
 import { Line, Bar } from "react-chartjs-2";
+import StockStream from "../components/StockStream";
 
 export default function Home() {
   const [stocks, setStocks] = useState([]);
@@ -69,6 +70,7 @@ export default function Home() {
     >
       <h1>📈 Stock Screener</h1>
       <SearchBar onSearch={handleSearch} />
+      <StockStream setStocks={setStocks} />
 
       {/* Auto-refresh toggle */}
       <button
