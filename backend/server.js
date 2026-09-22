@@ -8,46 +8,56 @@ const PORT = process.env.PORT || 3001;
 
 // Restrict CORS to your frontend domain
 app.use(cors({
-  origin: "https://stock-screener-sepia.vercel.app/"
+  origin: "https://stock-screener-sepia.vercel.app"
 }));
 
-app.get("/stocks", (req, res) => {
-  const data = [
-    { ticker: "AAPL", price: 150, changePercent: 1.2 },
-    { ticker: "MSFT", price: 300, changePercent: -0.5 },
-    { ticker: "GOOG", price: 2800, changePercent: 0.8 }
-  ];
-  res.json(data);
+const symbols = ["AAPL", "MSFT", "GOOG"];
+
+// Helper function to fetch live quotes
+async function fetchQuotes() {
+  const results = [];
+  for (const symbol of symbols) {
+    const response = await fetch(
+      `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${process.env.FINNHUB_KEY}`
+    );
+    const data = await response.json();
+    results.push({
+      ticker: symbol,
+      price: data.c,
+      changePercent: data.dp,
+    });
+  }
+  return results;
+}
+
+// REST endpoint
+app.get("/stocks", async (req, res) => {
+  try {
+    const data = await fetchQuotes();
+    res.json(data);
+  } catch (err) {
+    console.error("Error fetching stocks:", err);
+    res.status(500).json({ error: "Failed to fetch stocks" });
+  }
 });
 
+// Start HTTP server
 const server = app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);
 });
 
-const wss = new WebSocket.Server({ port: process.env.PORT || 8080 });
+// Attach WebSocket to the same server
+const wss = new WebSocket.Server({ server });
 
 wss.on("connection", (ws) => {
   console.log("Client connected");
 
-  const symbols = ["AAPL", "MSFT", "GOOG"];
-
   const sendData = async () => {
     try {
-      const results = [];
-      for (const symbol of symbols) {
-        const response = await fetch(
-          `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${process.env.FINNHUB_KEY}`
-        );
-        const data = await response.json();
-        results.push({
-          ticker: symbol,
-          price: data.c,
-          changePercent: data.dp,
-        });
-      }
-      ws.send(JSON.stringify(results));
+      const data = await fetchQuotes();
+      ws.send(JSON.stringify(data));
     } catch (err) {
-      console.error("Error fetching live data:", err);
+      console.error("Error sending live data:", err);
     }
   };
 
